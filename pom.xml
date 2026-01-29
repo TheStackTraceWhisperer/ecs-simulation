@@ -125,18 +125,22 @@
             </plugin>
 
             <!-- Artemis-ODB Maven Plugin -->
+            <!-- Temporarily disabled due to Java version compatibility -->
+            <!--
             <plugin>
                 <groupId>net.onedaybeard.artemis</groupId>
                 <artifactId>artemis-odb-maven-plugin</artifactId>
                 <version>${artemis.version}</version>
                 <executions>
                     <execution>
+                        <phase>process-classes</phase>
                         <goals>
                             <goal>artemis</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
+            -->
 
             <!-- Surefire Plugin for Unit Tests -->
             <plugin>

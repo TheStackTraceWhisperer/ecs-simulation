@@ -51,13 +51,42 @@ public class PersistenceService {
 
             // Serialize all components
             List<Map<String, Object>> componentsData = new ArrayList<>();
-            // Simplified: iterate through known component types
-            // In a real implementation, you'd use ComponentManager to get all components
+            
+            // Get all component types for this entity
+            // Note: This is a simplified approach; in production, you'd want to iterate
+            // through all registered component types
+            for (Class<? extends Component> componentType : getComponentTypes()) {
+                try {
+                    Component component = world.getMapper(componentType).get(entityId);
+                    if (component != null) {
+                        Map<String, Object> componentData = serializeComponent(component);
+                        componentsData.add(componentData);
+                    }
+                } catch (Exception e) {
+                    // Skip components that can't be accessed
+                }
+            }
+            
             entityData.put("components", componentsData);
             entities.add(entityData);
         }
 
         yamlService.dump(filename, entities);
+    }
+    
+    /**
+     * Gets the list of component types to serialize.
+     * This is a simplified implementation.
+     */
+    private List<Class<? extends Component>> getComponentTypes() {
+        List<Class<? extends Component>> types = new ArrayList<>();
+        types.add(com.ecs.component.Position.class);
+        types.add(com.ecs.component.Velocity.class);
+        types.add(com.ecs.component.Identity.class);
+        types.add(com.ecs.component.Body.class);
+        types.add(com.ecs.component.Stats.class);
+        types.add(com.ecs.component.CombatStats.class);
+        return types;
     }
 
     /**

@@ -40,9 +40,10 @@ public class SpatialSystem extends IteratingSystem {
 
     @Override
     protected void removed(int entityId) {
-        Position position = positionMapper.get(entityId);
-        if (position != null) {
-            grid.remove(entityId, position.x, position.y);
+        SpatialNode node = spatialNodeMapper.get(entityId);
+        if (node != null) {
+            // Use the last known position from SpatialNode
+            grid.remove(entityId, node.lastX, node.lastY);
         }
     }
 

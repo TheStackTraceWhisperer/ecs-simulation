@@ -6,17 +6,15 @@ import com.artemis.systems.IteratingSystem;
 import com.ecs.component.Stats;
 import io.micronaut.core.annotation.Order;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * System for handling entity death when health reaches zero.
  */
 @Singleton
 @Order(5)
+@Slf4j
 public class DeathSystem extends IteratingSystem {
-
-    private static final Logger log = LoggerFactory.getLogger(DeathSystem.class);
 
     private ComponentMapper<Stats> statsMapper;
 

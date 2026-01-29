@@ -47,15 +47,17 @@ public class PersistenceService {
         for (int i = 0; i < entityIds.size(); i++) {
             int entityId = entityIds.get(i);
             Map<String, Object> entityData = new HashMap<>();
-            entityData.put("id", entityId);
 
             // Serialize all components
             List<Map<String, Object>> componentsData = new ArrayList<>();
             
-            // Get all component types for this entity
-            // Note: This is a simplified approach; in production, you'd want to iterate
-            // through all registered component types
-            for (Class<? extends Component> componentType : getComponentTypes()) {
+            // Iterate over all component types registered in the world
+            for (Class<? extends Component> componentType : getAllComponentTypes()) {
+                // Skip transient components
+                if (componentType.isAnnotationPresent(com.artemis.annotations.Transient.class)) {
+                    continue;
+                }
+                
                 try {
                     Component component = world.getMapper(componentType).get(entityId);
                     if (component != null) {
@@ -75,17 +77,21 @@ public class PersistenceService {
     }
     
     /**
-     * Gets the list of component types to serialize.
-     * This is a simplified implementation.
+     * Gets all component types to serialize.
+     * Returns all known component types excluding transient ones.
      */
-    private List<Class<? extends Component>> getComponentTypes() {
+    private List<Class<? extends Component>> getAllComponentTypes() {
         List<Class<? extends Component>> types = new ArrayList<>();
+        // Include all persistent component types
         types.add(com.ecs.component.Position.class);
         types.add(com.ecs.component.Velocity.class);
         types.add(com.ecs.component.Identity.class);
         types.add(com.ecs.component.Body.class);
         types.add(com.ecs.component.Stats.class);
         types.add(com.ecs.component.CombatStats.class);
+        types.add(com.ecs.component.Persistent.class);
+        types.add(com.ecs.component.AiBehavior.class);
+        // Note: SwingTimer, AttackIntent, and SpatialNode are @Transient and handled by annotation check
         return types;
     }
 

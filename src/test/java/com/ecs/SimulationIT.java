@@ -5,6 +5,7 @@ import com.artemis.WorldConfigurationBuilder;
 import com.ecs.ai.ChaseNode;
 import com.ecs.ai.CombatNode;
 import com.ecs.ai.FindTargetNode;
+import com.ecs.ai.SequenceNode;
 import com.ecs.component.*;
 import com.ecs.spatial.SpatialHashGrid;
 import com.ecs.system.*;
@@ -49,7 +50,7 @@ class SimulationIT {
                 .add(new SpatialNode(5, 0))
                 .add(new Stats(50)); // 50 health
 
-        // Add AI behavior to attacker to chase and attack target
+        // Add AI behavior to attacker using a sequence: find → chase → attack
         FindTargetNode findTarget = new FindTargetNode(grid);
         world.edit(attacker).add(new AiBehavior(findTarget));
 
@@ -66,19 +67,15 @@ class SimulationIT {
                 break;
             }
 
-            // Update AI behavior to chase the target once found
+            // Once target is found, switch to chase and combat behavior
             if (i == 10 && findTarget.getLastFoundTarget() != -1) {
-                // Switch to chase behavior
                 int foundTarget = findTarget.getLastFoundTarget();
-                ChaseNode chase = new ChaseNode(foundTarget, 10.0f);
-                CombatNode combat = new CombatNode(foundTarget);
-                // Simplified: just use combat node directly for this test
-                world.edit(attacker).add(new AiBehavior(combat));
-                
-                // Manually move attacker close to target for testing
-                Position attackerPos = world.getMapper(Position.class).get(attacker);
-                attackerPos.x = 3;
-                attackerPos.y = 0;
+                // Create sequence: chase → combat
+                SequenceNode chaseAndAttack = new SequenceNode(
+                    new ChaseNode(foundTarget, 0.5f), // Chase at 0.5 units per tick
+                    new CombatNode(foundTarget)
+                );
+                world.edit(attacker).add(new AiBehavior(chaseAndAttack));
             }
         }
 

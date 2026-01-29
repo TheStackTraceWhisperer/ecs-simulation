@@ -3,6 +3,7 @@ package com.ecs.factory;
 import com.artemis.Component;
 import com.artemis.ComponentMapper;
 import com.artemis.World;
+import com.ecs.component.Identity;
 import com.ecs.component.Position;
 import com.ecs.registry.TemplateRegistry;
 import jakarta.inject.Inject;
@@ -28,7 +29,7 @@ public class EntityFactory {
     /**
      * Prepares a new entity builder.
      *
-     * @param id the entity identifier
+     * @param id the template name or entity identifier
      * @return the builder
      */
     public EntityBuilder prepare(String id) {
@@ -80,6 +81,11 @@ public class EntityFactory {
          */
         public int build(World world) {
             int entityId = world.create();
+
+            // Always attach Identity component with the id
+            ComponentMapper<Identity> identityMapper = world.getMapper(Identity.class);
+            Identity identity = world.edit(entityId).create(Identity.class);
+            identity.id = id;
 
             // Add components from template if id matches a template
             List<Component> templateComponents = templateRegistry.getTemplate(id);

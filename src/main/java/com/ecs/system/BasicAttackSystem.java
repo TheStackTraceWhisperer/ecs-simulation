@@ -6,17 +6,15 @@ import com.artemis.systems.IteratingSystem;
 import com.ecs.component.*;
 import io.micronaut.core.annotation.Order;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * System for processing basic attacks.
  */
 @Singleton
 @Order(4)
+@Slf4j
 public class BasicAttackSystem extends IteratingSystem {
-
-    private static final Logger log = LoggerFactory.getLogger(BasicAttackSystem.class);
 
     private ComponentMapper<CombatStats> combatStatsMapper;
     private ComponentMapper<SwingTimer> swingTimerMapper;

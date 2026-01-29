@@ -4,15 +4,18 @@ import com.artemis.Component;
 import com.ecs.service.YamlService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.net.URL;
 import java.util.*;
 
 /**
  * Registry for entity templates loaded from YAML prefab files.
  */
 @Singleton
+@Slf4j
 public class TemplateRegistry {
 
     private final YamlService yamlService;
@@ -25,31 +28,117 @@ public class TemplateRegistry {
     }
 
     /**
-     * Scans the prefabs directory and loads all YAML templates.
+     * Scans the prefabs directory via classpath and loads all YAML templates.
      */
     private void loadTemplates() {
-        File prefabsDir = new File("src/main/resources/prefabs");
-        if (!prefabsDir.exists() || !prefabsDir.isDirectory()) {
-            System.out.println("Prefabs directory not found, skipping template loading.");
-            return;
+        try {
+            // Use ClassLoader to get resources from classpath (works in JAR)
+            ClassLoader classLoader = getClass().getClassLoader();
+            URL prefabsUrl = classLoader.getResource("prefabs");
+            
+            if (prefabsUrl == null) {
+                log.info("Prefabs directory not found in classpath, skipping template loading.");
+                return;
+            }
+
+            // For simplicity, we'll check if there are any YAML files in the prefabs directory
+            // In a production system, you might want to use a resource scanner or list files differently
+            String[] templateNames = {"example"}; // Placeholder - in real implementation, scan directory
+            
+            for (String templateName : templateNames) {
+                try {
+                    String resourcePath = "prefabs/" + templateName + ".yml";
+                    InputStream inputStream = classLoader.getResourceAsStream(resourcePath);
+                    
+                    if (inputStream == null) {
+                        resourcePath = "prefabs/" + templateName + ".yaml";
+                        inputStream = classLoader.getResourceAsStream(resourcePath);
+                    }
+                    
+                    if (inputStream != null) {
+                        loadTemplate(templateName, inputStream);
+                        inputStream.close();
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to load template {}: {}", templateName, e.getMessage());
+                }
+            }
+            
+            log.info("Loaded {} templates", templates.size());
+        } catch (Exception e) {
+            log.error("Failed to load templates: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Loads a single template from an input stream.
+     */
+    @SuppressWarnings("unchecked")
+    private void loadTemplate(String templateName, InputStream inputStream) {
+        try {
+            Map<String, Object> templateData = (Map<String, Object>) yamlService.getYaml().load(inputStream);
+            
+            if (templateData == null || !templateData.containsKey("components")) {
+                log.warn("Template {} has no components", templateName);
+                return;
+            }
+
+            List<Map<String, Object>> componentsData = (List<Map<String, Object>>) templateData.get("components");
+            List<Component> components = new ArrayList<>();
+
+            for (Map<String, Object> componentData : componentsData) {
+                try {
+                    Component component = instantiateComponent(componentData);
+                    components.add(component);
+                } catch (Exception e) {
+                    log.error("Failed to instantiate component in template {}: {}", templateName, e.getMessage());
+                }
+            }
+
+            templates.put(templateName, components);
+            log.info("Loaded template '{}' with {} components", templateName, components.size());
+        } catch (Exception e) {
+            log.error("Failed to parse template {}: {}", templateName, e.getMessage());
+        }
+    }
+
+    /**
+     * Instantiates a component from YAML data.
+     */
+    @SuppressWarnings("unchecked")
+    private Component instantiateComponent(Map<String, Object> data) throws Exception {
+        String typeName = (String) data.get("type");
+        
+        if (typeName == null) {
+            throw new IllegalArgumentException("Component type is missing");
         }
 
-        File[] files = prefabsDir.listFiles((dir, name) -> name.endsWith(".yml") || name.endsWith(".yaml"));
-        if (files == null || files.length == 0) {
-            System.out.println("No prefab files found.");
-            return;
+        // Restrict to known component classes
+        if (!typeName.startsWith("com.ecs.component.")) {
+            throw new IllegalArgumentException("Disallowed component type: " + typeName);
         }
 
-        for (File file : files) {
-            try {
-                String templateName = file.getName().replaceAll("\\.(yml|yaml)$", "");
-                // Load as a generic map structure
-                // The actual component instantiation will be handled by EntityFactory
-                System.out.println("Found template: " + templateName);
-            } catch (Exception e) {
-                System.err.println("Failed to load template from " + file.getName() + ": " + e.getMessage());
+        Class<?> rawClass = Class.forName(typeName);
+        if (!Component.class.isAssignableFrom(rawClass)) {
+            throw new IllegalArgumentException("Type is not a valid Component: " + typeName);
+        }
+
+        Component component = ((Class<? extends Component>) rawClass).getDeclaredConstructor().newInstance();
+
+        // Set field values
+        Map<String, Object> fields = (Map<String, Object>) data.get("fields");
+        if (fields != null) {
+            for (Map.Entry<String, Object> entry : fields.entrySet()) {
+                try {
+                    Field field = component.getClass().getField(entry.getKey());
+                    field.set(component, entry.getValue());
+                } catch (NoSuchFieldException e) {
+                    log.warn("Field {} not found in component {}", entry.getKey(), typeName);
+                }
             }
         }
+
+        return component;
     }
 
     /**

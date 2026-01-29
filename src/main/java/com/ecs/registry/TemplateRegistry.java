@@ -29,6 +29,10 @@ public class TemplateRegistry {
 
     /**
      * Scans the prefabs directory via classpath and loads all YAML templates.
+     * 
+     * <p><strong>Note:</strong> Current implementation requires manual listing of template names.
+     * A future enhancement could use ClassGraph or Reflections library to dynamically discover
+     * all YAML files in the prefabs directory.</p>
      */
     private void loadTemplates() {
         try {
@@ -41,9 +45,8 @@ public class TemplateRegistry {
                 return;
             }
 
-            // For simplicity, we'll check if there are any YAML files in the prefabs directory
-            // In a production system, you might want to use a resource scanner or list files differently
-            String[] templateNames = {"example"}; // Placeholder - in real implementation, scan directory
+            // TODO: Use resource scanner library to dynamically discover YAML files
+            String[] templateNames = {"example"}; // Manually maintained list
             
             for (String templateName : templateNames) {
                 try {
@@ -75,8 +78,8 @@ public class TemplateRegistry {
      */
     @SuppressWarnings("unchecked")
     private void loadTemplate(String templateName, InputStream inputStream) {
-        try {
-            Map<String, Object> templateData = (Map<String, Object>) yamlService.getYaml().load(inputStream);
+        try (InputStream stream = inputStream) {
+            Map<String, Object> templateData = (Map<String, Object>) yamlService.getYaml().load(stream);
             
             if (templateData == null || !templateData.containsKey("components")) {
                 log.warn("Template {} has no components", templateName);

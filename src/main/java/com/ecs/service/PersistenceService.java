@@ -78,7 +78,9 @@ public class PersistenceService {
     
     /**
      * Gets all component types to serialize.
-     * Returns all known component types excluding transient ones.
+     * Returns all known persistent component types, excluding:
+     * - @Transient components (handled by annotation check)
+     * - AiBehavior (contains non-serializable BehaviorNode state)
      */
     private List<Class<? extends Component>> getAllComponentTypes() {
         List<Class<? extends Component>> types = new ArrayList<>();
@@ -90,7 +92,7 @@ public class PersistenceService {
         types.add(com.ecs.component.Stats.class);
         types.add(com.ecs.component.CombatStats.class);
         types.add(com.ecs.component.Persistent.class);
-        types.add(com.ecs.component.AiBehavior.class);
+        // Note: AiBehavior excluded - contains non-serializable BehaviorNode references
         // Note: SwingTimer, AttackIntent, and SpatialNode are @Transient and handled by annotation check
         return types;
     }

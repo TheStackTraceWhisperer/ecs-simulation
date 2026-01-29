@@ -10,6 +10,10 @@ import java.util.List;
  * Returns SUCCESS only if all children succeed.
  * Returns FAILURE if any child fails.
  * Returns RUNNING if any child is still running.
+ * 
+ * <p><strong>Important:</strong> SequenceNode instances maintain state (currentIndex) 
+ * and should NOT be shared between multiple entities. Each entity should have its own 
+ * SequenceNode instance or the behavior should be recreated per entity.
  */
 public class SequenceNode implements BehaviorNode {
 

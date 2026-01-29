@@ -4,13 +4,19 @@ import com.artemis.Aspect;
 import com.artemis.ComponentMapper;
 import com.artemis.systems.IteratingSystem;
 import com.ecs.component.*;
+import io.micronaut.core.annotation.Order;
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * System for processing basic attacks.
  */
 @Singleton
+@Order(4)
 public class BasicAttackSystem extends IteratingSystem {
+
+    private static final Logger log = LoggerFactory.getLogger(BasicAttackSystem.class);
 
     private ComponentMapper<CombatStats> combatStatsMapper;
     private ComponentMapper<SwingTimer> swingTimerMapper;
@@ -80,8 +86,8 @@ public class BasicAttackSystem extends IteratingSystem {
         // Check range and apply damage
         if (distance <= attackerStats.range) {
             targetStats.health -= attackerStats.damage;
-            System.out.println("Entity " + attackerId + " attacked " + targetId + 
-                               " for " + attackerStats.damage + " damage. Target health: " + targetStats.health);
+            log.debug("Entity {} attacked {} for {} damage. Target health: {}", 
+                     attackerId, targetId, attackerStats.damage, targetStats.health);
         }
     }
 }

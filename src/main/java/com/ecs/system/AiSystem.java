@@ -4,12 +4,14 @@ import com.artemis.Aspect;
 import com.artemis.ComponentMapper;
 import com.artemis.systems.IteratingSystem;
 import com.ecs.component.AiBehavior;
+import io.micronaut.core.annotation.Order;
 import jakarta.inject.Singleton;
 
 /**
  * System for executing AI behaviors.
  */
 @Singleton
+@Order(3)
 public class AiSystem extends IteratingSystem {
 
     private ComponentMapper<AiBehavior> aiBehaviorMapper;

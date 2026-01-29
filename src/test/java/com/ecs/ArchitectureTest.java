@@ -5,6 +5,7 @@ import com.artemis.BaseSystem;
 import com.artemis.systems.IteratingSystem;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.BeforeAll;
@@ -27,26 +28,55 @@ class ArchitectureTest {
 
     @Test
     void componentsMustHavePublicFields() {
-        // Note: ArchUnit doesn't have direct "public fields only" check
-        // We ensure components are in the right package and properly structured
-        ArchRule rule = classes()
+        // Custom condition: all declared fields must be public
+        ArchRule publicFieldsRule = classes()
                 .that().areAssignableTo(Component.class)
                 .and().resideInAPackage("..component..")
-                .should().bePublic();
+                .should(new ArchCondition<>("have only public fields") {
+                    @Override
+                    public void check(com.tngtech.archunit.core.domain.JavaClass javaClass, 
+                                     com.tngtech.archunit.lang.ConditionEvents events) {
+                        javaClass.getAllFields().stream()
+                                .filter(field -> !field.getModifiers().contains(com.tngtech.archunit.core.domain.JavaModifier.STATIC))
+                                .forEach(field -> {
+                                    if (!field.getModifiers().contains(com.tngtech.archunit.core.domain.JavaModifier.PUBLIC)) {
+                                        String message = String.format(
+                                            "Field %s.%s is not public",
+                                            javaClass.getName(), field.getName()
+                                        );
+                                        events.add(com.tngtech.archunit.lang.SimpleConditionEvent.violated(field, message));
+                                    }
+                                });
+                    }
+                });
 
-        rule.check(importedClasses);
+        publicFieldsRule.check(importedClasses);
     }
 
     @Test
     void componentsMustNotHaveMethods() {
-        // Note: Checking for "no methods" is tricky with ArchUnit as it needs to exclude
-        // constructors and inherited methods. We'll enforce this through code review.
-        // For now, we ensure components are in the right package.
-        ArchRule packageRule = classes()
+        // Components should not have any methods except constructors and inherited methods
+        ArchRule rule = classes()
                 .that().areAssignableTo(Component.class)
-                .should().resideInAPackage("..component..");
+                .and().resideInAPackage("..component..")
+                .should(new ArchCondition<>("not have any declared methods except constructors") {
+                    @Override
+                    public void check(com.tngtech.archunit.core.domain.JavaClass javaClass, 
+                                     com.tngtech.archunit.lang.ConditionEvents events) {
+                        javaClass.getMethods().stream()
+                                .filter(method -> method.getOwner().equals(javaClass))
+                                .filter(method -> !method.getName().equals("<init>"))
+                                .forEach(method -> {
+                                    String message = String.format(
+                                        "Component %s declares method %s, but components should only contain data",
+                                        javaClass.getName(), method.getName()
+                                    );
+                                    events.add(com.tngtech.archunit.lang.SimpleConditionEvent.violated(method, message));
+                                });
+                    }
+                });
 
-        packageRule.check(importedClasses);
+        rule.check(importedClasses);
     }
 
     @Test

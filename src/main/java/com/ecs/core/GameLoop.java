@@ -13,7 +13,7 @@ public class GameLoop implements Runnable {
     private final World world;
     private final WorldCommandQueue commandQueue;
     private volatile boolean running = true;
-    private long lastTime = System.nanoTime();
+    private long lastTime;
 
     @Inject
     public GameLoop(World world, WorldCommandQueue commandQueue) {
@@ -30,6 +30,9 @@ public class GameLoop implements Runnable {
 
     @Override
     public void run() {
+        // Initialize lastTime when thread actually starts
+        lastTime = System.nanoTime();
+        
         while (running) {
             try {
                 // Calculate delta time in seconds

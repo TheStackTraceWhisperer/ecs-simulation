@@ -97,8 +97,10 @@ public class PersistenceService {
      */
     @SuppressWarnings("unchecked")
     public void load(String filename) throws IOException {
-        List<Map<String, Object>> entities = (List<Map<String, Object>>) 
-                yamlService.getYaml().load(new java.io.FileReader(filename));
+        List<Map<String, Object>> entities;
+        try (java.io.FileReader reader = new java.io.FileReader(filename)) {
+            entities = (List<Map<String, Object>>) yamlService.getYaml().load(reader);
+        }
 
         if (entities == null) {
             return;
@@ -154,8 +156,22 @@ public class PersistenceService {
     @SuppressWarnings("unchecked")
     private Component deserializeComponent(Map<String, Object> data) throws Exception {
         String typeName = (String) data.get("type");
-        Class<? extends Component> componentClass = 
-                (Class<? extends Component>) Class.forName(typeName);
+        
+        if (typeName == null) {
+            throw new IllegalArgumentException("Component type is missing");
+        }
+
+        // Restrict deserialization to known-safe component classes
+        if (!typeName.startsWith("com.ecs.component.")) {
+            throw new IllegalArgumentException("Disallowed component type: " + typeName);
+        }
+
+        Class<?> rawClass = Class.forName(typeName);
+        if (!Component.class.isAssignableFrom(rawClass)) {
+            throw new IllegalArgumentException("Type is not a valid Component: " + typeName);
+        }
+
+        Class<? extends Component> componentClass = (Class<? extends Component>) rawClass;
         Component component = componentClass.getDeclaredConstructor().newInstance();
 
         Map<String, Object> fields = (Map<String, Object>) data.get("fields");

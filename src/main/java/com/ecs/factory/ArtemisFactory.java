@@ -4,9 +4,11 @@ import com.artemis.BaseSystem;
 import com.artemis.World;
 import com.artemis.WorldConfigurationBuilder;
 import io.micronaut.context.annotation.Factory;
+import io.micronaut.core.annotation.Order;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -24,6 +26,7 @@ public class ArtemisFactory {
 
     /**
      * Creates a configured World instance with all registered systems.
+     * Systems are registered in order determined by @Order annotations.
      *
      * @return the configured World
      */
@@ -31,11 +34,19 @@ public class ArtemisFactory {
     public World createWorld() {
         WorldConfigurationBuilder builder = new WorldConfigurationBuilder();
 
-        // Register all injected systems
-        for (BaseSystem system : systems) {
-            builder.with(system);
-        }
+        // Sort systems by @Order annotation (lower values = higher priority)
+        systems.stream()
+                .sorted(Comparator.comparingInt(this::getOrder))
+                .forEach(builder::with);
 
         return new World(builder.build());
+    }
+
+    /**
+     * Gets the order value for a system, defaulting to 0 if not annotated.
+     */
+    private int getOrder(BaseSystem system) {
+        Order orderAnnotation = system.getClass().getAnnotation(Order.class);
+        return orderAnnotation != null ? orderAnnotation.value() : 0;
     }
 }

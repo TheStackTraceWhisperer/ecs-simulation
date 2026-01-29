@@ -1,7 +1,9 @@
 package com.ecs.factory;
 
 import com.artemis.Component;
+import com.artemis.ComponentMapper;
 import com.artemis.World;
+import com.ecs.component.Position;
 import com.ecs.registry.TemplateRegistry;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -95,19 +97,13 @@ public class EntityFactory {
 
             // Apply position override if specified
             if (x != null && y != null) {
-                try {
-                    Component posComp = world.getMapper(
-                            Class.forName("com.ecs.component.Position").asSubclass(Component.class)
-                    ).get(entityId);
-                    if (posComp != null) {
-                        Field xField = posComp.getClass().getField("x");
-                        Field yField = posComp.getClass().getField("y");
-                        xField.setFloat(posComp, x);
-                        yField.setFloat(posComp, y);
-                    }
-                } catch (Exception e) {
-                    System.err.println("Failed to apply position override: " + e.getMessage());
+                ComponentMapper<Position> positionMapper = world.getMapper(Position.class);
+                Position posComp = positionMapper.get(entityId);
+                if (posComp == null) {
+                    posComp = world.edit(entityId).create(Position.class);
                 }
+                posComp.x = x;
+                posComp.y = y;
             }
 
             return entityId;

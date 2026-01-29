@@ -6,6 +6,7 @@ import com.artemis.systems.IteratingSystem;
 import com.ecs.component.Position;
 import com.ecs.component.SpatialNode;
 import com.ecs.spatial.SpatialHashGrid;
+import io.micronaut.core.annotation.Order;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -13,6 +14,7 @@ import jakarta.inject.Singleton;
  * System for maintaining entity positions in the spatial grid.
  */
 @Singleton
+@Order(2)
 public class SpatialSystem extends IteratingSystem {
 
     private final SpatialHashGrid grid;

@@ -58,4 +58,9 @@ public class CombatNode implements BehaviorNode {
 
         return Status.FAILURE;
     }
+
+    @Override
+    public BehaviorNode deepCopy() {
+        return new CombatNode(targetId);
+    }
 }

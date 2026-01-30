@@ -55,4 +55,14 @@ public class SequenceNode implements BehaviorNode {
         currentIndex = 0; // Reset for next execution
         return Status.SUCCESS;
     }
+
+    @Override
+    public BehaviorNode deepCopy() {
+        // Deep copy all children
+        BehaviorNode[] copiedChildren = new BehaviorNode[children.size()];
+        for (int i = 0; i < children.size(); i++) {
+            copiedChildren[i] = children.get(i).deepCopy();
+        }
+        return new SequenceNode(copiedChildren);
+    }
 }

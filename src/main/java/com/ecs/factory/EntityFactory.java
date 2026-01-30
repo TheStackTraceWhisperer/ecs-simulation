@@ -117,6 +117,7 @@ public class EntityFactory {
 
         /**
          * Copies a component using reflection.
+         * Special handling for AiBehavior to ensure deep copy of behavior trees.
          *
          * @param source the source component
          * @return the copied component
@@ -125,7 +126,16 @@ public class EntityFactory {
             try {
                 Component copy = source.getClass().getDeclaredConstructor().newInstance();
                 for (Field field : source.getClass().getFields()) {
-                    field.set(copy, field.get(source));
+                    Object value = field.get(source);
+                    
+                    // Special handling for AiBehavior to deep copy the rootNode
+                    if (source instanceof com.ecs.component.AiBehavior && "rootNode".equals(field.getName())) {
+                        if (value instanceof com.ecs.ai.BehaviorNode) {
+                            value = ((com.ecs.ai.BehaviorNode) value).deepCopy();
+                        }
+                    }
+                    
+                    field.set(copy, value);
                 }
                 return copy;
             } catch (Exception e) {

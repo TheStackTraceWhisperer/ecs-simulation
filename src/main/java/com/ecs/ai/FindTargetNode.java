@@ -67,4 +67,11 @@ public class FindTargetNode implements BehaviorNode {
     public int getLastFoundTarget() {
         return lastFoundTarget;
     }
+
+    @Override
+    public BehaviorNode deepCopy() {
+        // Create a new instance with the same grid reference
+        // Note: lastFoundTarget is intentionally reset to -1 for the new instance
+        return new FindTargetNode(grid);
+    }
 }

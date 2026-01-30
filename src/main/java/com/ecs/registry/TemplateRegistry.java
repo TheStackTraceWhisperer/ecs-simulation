@@ -2,13 +2,15 @@ package com.ecs.registry;
 
 import com.artemis.Component;
 import com.ecs.service.YamlService;
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.Resource;
+import io.github.classgraph.ScanResult;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.net.URL;
 import java.util.*;
 
 /**
@@ -29,41 +31,22 @@ public class TemplateRegistry {
 
     /**
      * Scans the prefabs directory via classpath and loads all YAML templates.
-     * 
-     * <p><strong>Note:</strong> Current implementation requires manual listing of template names.
-     * A future enhancement could use ClassGraph or Reflections library to dynamically discover
-     * all YAML files in the prefabs directory.</p>
+     * Uses ClassGraph for dynamic discovery of YAML files.
      */
     private void loadTemplates() {
         try {
-            // Use ClassLoader to get resources from classpath (works in JAR)
-            ClassLoader classLoader = getClass().getClassLoader();
-            URL prefabsUrl = classLoader.getResource("prefabs");
-            
-            if (prefabsUrl == null) {
-                log.info("Prefabs directory not found in classpath, skipping template loading.");
-                return;
-            }
-
-            // TODO: Use resource scanner library to dynamically discover YAML files
-            String[] templateNames = {"example"}; // Manually maintained list
-            
-            for (String templateName : templateNames) {
-                try {
-                    String resourcePath = "prefabs/" + templateName + ".yml";
-                    InputStream inputStream = classLoader.getResourceAsStream(resourcePath);
-                    
-                    if (inputStream == null) {
-                        resourcePath = "prefabs/" + templateName + ".yaml";
-                        inputStream = classLoader.getResourceAsStream(resourcePath);
-                    }
-                    
-                    if (inputStream != null) {
-                        loadTemplate(templateName, inputStream);
-                        inputStream.close();
-                    }
-                } catch (Exception e) {
-                    log.error("Failed to load template {}: {}", templateName, e.getMessage());
+            // Use ClassGraph to scan for YAML files in the prefabs directory
+            try (ScanResult scanResult = new ClassGraph()
+                    .acceptPaths("prefabs")
+                    .scan()) {
+                
+                // Find all .yml and .yaml files
+                for (Resource resource : scanResult.getResourcesWithExtension("yml")) {
+                    loadTemplateFromResource(resource);
+                }
+                
+                for (Resource resource : scanResult.getResourcesWithExtension("yaml")) {
+                    loadTemplateFromResource(resource);
                 }
             }
             
@@ -71,6 +54,42 @@ public class TemplateRegistry {
         } catch (Exception e) {
             log.error("Failed to load templates: {}", e.getMessage());
         }
+    }
+
+    /**
+     * Loads a template from a ClassGraph resource.
+     */
+    private void loadTemplateFromResource(Resource resource) {
+        try {
+            String path = resource.getPath();
+            String templateName = extractTemplateName(path);
+            
+            try (InputStream inputStream = resource.open()) {
+                loadTemplate(templateName, inputStream);
+            }
+        } catch (Exception e) {
+            log.error("Failed to load template from {}: {}", resource.getPath(), e.getMessage());
+        }
+    }
+
+    /**
+     * Extracts the template name from a resource path.
+     * Example: "prefabs/orc.yml" -> "orc"
+     */
+    private String extractTemplateName(String path) {
+        String fileName = path;
+        int lastSlash = path.lastIndexOf('/');
+        if (lastSlash >= 0) {
+            fileName = path.substring(lastSlash + 1);
+        }
+        
+        // Remove extension
+        int lastDot = fileName.lastIndexOf('.');
+        if (lastDot >= 0) {
+            fileName = fileName.substring(0, lastDot);
+        }
+        
+        return fileName;
     }
 
     /**

@@ -14,4 +14,12 @@ public interface BehaviorNode {
      * @return the execution status
      */
     Status execute(World world, int entityId);
+
+    /**
+     * Creates a deep copy of this behavior node.
+     * This is essential for ensuring entities maintain independent AI state.
+     *
+     * @return a new instance with the same configuration but independent state
+     */
+    BehaviorNode deepCopy();
 }

@@ -49,4 +49,9 @@ public class ChaseNode implements BehaviorNode {
 
         return Status.RUNNING;
     }
+
+    @Override
+    public BehaviorNode deepCopy() {
+        return new ChaseNode(targetId, speed);
+    }
 }

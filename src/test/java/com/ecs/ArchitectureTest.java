@@ -110,4 +110,14 @@ class ArchitectureTest {
 
         rule.check(importedClasses);
     }
+
+    @Test
+    void componentsShouldNotDependOnSystems() {
+        ArchRule rule = classes()
+                .that().resideInAPackage("..component..")
+                .should().onlyDependOnClassesThat()
+                .resideOutsideOfPackage("..system..");
+
+        rule.check(importedClasses);
+    }
 }

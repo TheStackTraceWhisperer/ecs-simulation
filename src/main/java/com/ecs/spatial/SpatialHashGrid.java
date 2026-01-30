@@ -12,17 +12,23 @@ import jakarta.inject.Singleton;
 public class SpatialHashGrid {
 
     private static final int CELL_SIZE = 100;
+    
+    // Hash computation constants for combining x and y coordinates into a single long key
+    private static final int COORDINATE_SHIFT_BITS = 32;
+    private static final long LOWER_32_BITS_MASK = 0xFFFFFFFFL;
+    
     private final Long2ObjectOpenHashMap<IntBag> grid = new Long2ObjectOpenHashMap<>();
 
     /**
-     * Computes the hash key for a grid cell.
+     * Computes the hash key for a grid cell by packing x and y coordinates into a single long.
+     * Uses the upper 32 bits for x and lower 32 bits for y.
      *
      * @param x the x coordinate
      * @param y the y coordinate
      * @return the hash key
      */
     private long hash(int x, int y) {
-        return ((long) x << 32) | (y & 0xFFFFFFFFL);
+        return ((long) x << COORDINATE_SHIFT_BITS) | (y & LOWER_32_BITS_MASK);
     }
 
     /**

@@ -48,9 +48,9 @@ public class FindTargetNode implements BehaviorNode {
 
             float dx = targetPos.x - myPosition.x;
             float dy = targetPos.y - myPosition.y;
-            float distance = (float) Math.sqrt(dx * dx + dy * dy);
+            float distanceSq = dx * dx + dy * dy;
 
-            if (distance < closestDistance) {
+            if (distanceSq < closestDistance) {
                 closestDistance = distance;
                 closestTarget = potentialTarget;
             }

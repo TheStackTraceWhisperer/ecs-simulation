@@ -51,7 +51,7 @@ public class FindTargetNode implements BehaviorNode {
             float distanceSq = dx * dx + dy * dy;
 
             if (distanceSq < closestDistance) {
-                closestDistance = distance;
+                closestDistance = distanceSq;
                 closestTarget = potentialTarget;
             }
         }

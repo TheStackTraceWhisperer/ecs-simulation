@@ -3,10 +3,12 @@ package com.ecs.core;
 import com.artemis.World;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Main game loop that processes the world at regular intervals.
  */
+@Slf4j
 @Singleton
 public class GameLoop implements Runnable {
 

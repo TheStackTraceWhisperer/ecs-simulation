@@ -2,6 +2,7 @@ package com.ecs.core;
 
 import com.artemis.World;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
@@ -10,6 +11,7 @@ import java.util.function.Consumer;
  * Thread-safe command queue for deferred world operations.
  * Commands are queued and executed during the world processing phase.
  */
+@Slf4j
 @Singleton
 public class WorldCommandQueue {
     private final ConcurrentLinkedQueue<Consumer<World>> queue = new ConcurrentLinkedQueue<>();

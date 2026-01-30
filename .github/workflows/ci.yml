@@ -1,5 +1,9 @@
 name: ECS Simulation CI
 
+# Note: This workflow uses Java 21 as specified in pom.xml properties.
+# If building locally with Java 17, temporarily adjust <source> and <target>
+# in the maven-compiler-plugin configuration to 17.
+
 on:
   push:
     branches: [ "main" ]
@@ -22,6 +26,12 @@ jobs:
         java-version: '21'
         distribution: 'temurin'
         cache: 'maven'
+
+    # 2.5. Update compiler version to 21 for CI
+    - name: Set compiler version to Java 21
+      run: |
+        sed -i 's/<source>17<\/source>/<source>21<\/source>/g' pom.xml
+        sed -i 's/<target>17<\/target>/<target>21<\/target>/g' pom.xml
 
     # 3. Compile & Verify (Runs ArchUnit, Unit Tests, and Integration Tests)
     # The -Pcoverage profile can be used if configured, otherwise default lifecycle

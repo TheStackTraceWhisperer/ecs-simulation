@@ -36,8 +36,7 @@ public class WorldCommandQueue {
             try {
                 command.accept(world);
             } catch (Exception e) {
-                System.err.println("Error executing command: " + e.getMessage());
-                e.printStackTrace();
+                log.error("Error executing command: {}", e.getMessage(), e);
             }
         }
     }

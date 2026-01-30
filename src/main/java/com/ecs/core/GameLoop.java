@@ -53,8 +53,7 @@ public class GameLoop implements Runnable {
                 Thread.currentThread().interrupt();
                 running = false;
             } catch (Exception e) {
-                System.err.println("Error in game loop: " + e.getMessage());
-                e.printStackTrace();
+                log.error("Error in game loop: {}", e.getMessage(), e);
             }
         }
     }
